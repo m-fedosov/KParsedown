@@ -108,7 +108,7 @@ class Parsedown
         return $this;
     }
 
-    protected $strictMode = null;
+    protected $strictMode = null; // #Level 1 = <p>#Level 1</p>
 
     protected $safeLinksWhitelist = array(
         'http://',
@@ -134,7 +134,7 @@ class Parsedown
 
     protected $BlockTypes = array(
         '#' => array('Header'),
-        // '*' => array('Rule', 'List'),
+//        '*' => array('Rule'),
         // '+' => array('List'),
         // '-' => array('SetextHeader', 'Table', 'Rule', 'List'),
         // '0' => array('List'),
@@ -178,6 +178,7 @@ class Parsedown
     {
         $Elements = array();
         $CurrentBlock = null;
+        $Block = null;
 
         foreach ($lines as $line)
         {
@@ -218,12 +219,9 @@ class Parsedown
                 # using switch instead
                 // $methodName = 'block' . $CurrentBlock['type'] . 'Continue';
                 // $Block = $this->$methodName($Line, $CurrentBlock);
-                $Block = null;
                 switch ($CurrentBlock['type']) {
                     case "Code":
-                        if ($Line['indent'] >= 4) {
-                            $Block = $this->$blockCodeContinue($Line, $CurrentBlock);
-                        }
+                        $Block = $this->blockCodeContinue($Line, $CurrentBlock);
                         break;
                     // case "Comment":
                     //     $Block = $this->$blockCommentContinue($Line, $CurrentBlock);
@@ -261,7 +259,7 @@ class Parsedown
                     // $CurrentBlock = $this->$methodName($CurrentBlock);
                     switch ($CurrentBlock['type']) {
                         case "Code":
-                            $Block = $this->$blockCodeComplete($CurrentBlock);
+                            $Block = $this->blockCodeComplete($CurrentBlock);
                             break;
                         // case "FencedCode":
                         //     $Block = $this->$blockFencedCodeComplete($CurrentBlock);
@@ -279,7 +277,7 @@ class Parsedown
 
             # ~
 
-            $blockTypes = $this->unmarkedBlockTypes;
+            $blockTypes = null;
 
             if (isset($this->BlockTypes[$marker]))
             {
@@ -288,6 +286,9 @@ class Parsedown
                     $blockTypes []= $blockType;
                 }
             }
+            else {
+                $blockTypes = $this->unmarkedBlockTypes;
+            }
             #
             # ~
 
@@ -295,39 +296,18 @@ class Parsedown
             {
                 # using switch instead
                 // $Block = $this->{"block$blockType"}($Line);
-                $Block = null;
                 switch ($blockType) {
                     case "Header":
-                        $level = strspn($Line['text'], '#');
-
-                        if ($level > 6)
-                        {
-                            break;
-                        }
-
-                        $text = trim($Line['text'], '#');
-
-                        # тут добавил str_split - не лучшая идея
-                        if ($this->strictMode and substr($text, 0, 1) !== ' ')
-                        {
-                            break;
-                        }
-
-                        $Block = $this->blockHeader($level, $text);
-
+                        $Block = $this->blockHeader($Line);
                         break;
+//                    case "Rule":
+//                        $Block = $this->blockRule($Line);
+//                        break;
                     // case "Comment":
                     //     $Block = $this->blockComment($Line);
                     //     break;
                     case "Code":
-                        if (isset($CurrentBlock) and $CurrentBlock['type'] === 'Paragraph' and ! isset($CurrentBlock['interrupted']))
-                        {
-                            break;
-                        }
-                        if ($Line['indent'] >= 4){
-                            $Block = $this->blockCode($Line);
-                        }
-                        $Block = null;
+                        $Block = $this->blockCode($Line, $CurrentBlock);
                         break;
                 }
 
@@ -412,7 +392,7 @@ class Parsedown
         {
             switch ($CurrentBlock['type']) {
                 case "Code":
-                    $Block = $this->blockCodeComplete($CurrentBlock);
+                    $CurrentBlock = $this->blockCodeComplete($CurrentBlock);
                     break;
                 // case "FencedCode":
                 //     $Block = $this->$blockFencedCodeComplete($CurrentBlock);
@@ -435,7 +415,7 @@ class Parsedown
         return $Elements;
     }
 
-    protected function extractElement(array $Component)
+    protected function extractElement($Component)
     {
         if ( ! isset($Component['element']))
         {
@@ -455,39 +435,53 @@ class Parsedown
     #
     # Code - сделал
 
-    protected function blockCode($Line)
+    protected function blockCode($Line, $Block = null) : ?array
     {
-        $text = substr($Line['body'], 4);
-
-        $Block = array(
-            'element' => array(
-                'name' => 'pre',
-                'element' => array(
-                    'name' => 'code',
-                    'text' => $text,
-                ),
-            ),
-        );
-
-        return $Block;
-    }
-
-    protected function blockCodeContinue($Line, $Block)
-    {
-        if (isset($Block['interrupted']))
+        if (isset($Block) and $Block['type'] === 'Paragraph' and ! isset($Block['interrupted']))
         {
-            $Block['element']['element']['text'] .= str_repeat("\n", $Block['interrupted']);
-
-            unset($Block['interrupted']);
+            return null;
         }
 
-        $Block['element']['element']['text'] .= "\n";
+        if ($Line['indent'] >= 4)
+        {
+            $text = substr($Line['body'], 4);
 
-        $text = substr($Line['body'], 4);
+            $Block = array(
+                'element' => array(
+                    'name' => 'pre',
+                    'element' => array(
+                        'name' => 'code',
+                        'text' => $text,
+                    ),
+                ),
+            );
 
-        $Block['element']['element']['text'] .= $text;
+            return $Block;
+        }
 
-        return $Block;
+        return null;
+    }
+
+    protected function blockCodeContinue($Line, $Block) : ?array
+    {
+        if ($Line['indent'] >= 4)
+        {
+            if (isset($Block['interrupted']))
+            {
+                $Block['element']['element']['text'] .= str_repeat("\n", $Block['interrupted']);
+
+                unset($Block['interrupted']);
+            }
+
+            $Block['element']['element']['text'] .= "\n";
+
+            $text = substr($Line['body'], 4);
+
+            $Block['element']['element']['text'] .= $text;
+
+            return $Block;
+        }
+        return null;
     }
 
     protected function blockCodeComplete($Block)
@@ -504,8 +498,22 @@ class Parsedown
     #
     # Header - сделал
 
-    protected function blockHeader($level, $text)
+    protected function blockHeader($Line) : ?array
     {
+        $level = strspn($Line['text'], '#');
+
+        if ($level > 6)
+        {
+            return null;
+        }
+
+        $text = trim($Line['text'], '#');
+
+        if ($this->strictMode and substr($text, 0, 1) !== ' ')
+        {
+            return null;
+        }
+
         $text = trim($text, ' ');
 
         $Block = array(
@@ -530,6 +538,24 @@ class Parsedown
 
     #
     # Rule
+
+//    protected function blockRule($Line) : ?array
+//    {
+//        $marker = $Line['text'][0];
+//
+//        if (substr_count($Line['text'], $marker) >= 3 and chop($Line['text'], " $marker") === '')
+//        {
+//            $Block = array(
+//                'element' => array(
+//                    'name' => 'hr',
+//                ),
+//            );
+//
+//            return $Block;
+//        }
+//
+//        return null;
+//    }
 
     #
     # Setext
@@ -625,57 +651,50 @@ class Parsedown
                     continue;
                 }
 
+                $Inline = null;
+
                 # using switch instead
                 // $Inline = $this->{"inline$inlineType"}($Excerpt);
 
-                // if ( ! isset($Inline))
-                // {
-                //     continue;
-                // }
-
                 switch ($inlineType) {
-                    // case "Image":
-                    //     $Inline = $this->inlineImage($Excerpt);
-                    //     break;
-                    // case "SpecialCharacter":
-                    //     $Inline = $this->inlineSpecialCharacter($Excerpt);
-                    //     break;
-                    // case "Emphasis":
-                    //     $Inline = $this->inlineEmphasis($Excerpt);
-                    //     break;
-                    // case "Url":
-                    //     $Inline = $this->inlineUrl($Excerpt);
-                    //     break;
-                    // case "UrlTag":
-                    //     $Inline = $this->inlineUrlTag($Excerpt);
-                    //     break;
-                    // case "EmailTag":
-                    //     $Inline = $this->inlineEmailTag($Excerpt);
-                    //     break;
-                    // case "Markup":
-                    //     $Inline = $this->inlineMarkup($Excerpt);
-                    //     break;
-                    // case "Link":
-                    //     $Inline = $this->inlineLink($Excerpt);
-                    //     break;
-                    // case "Emphasis":
-                    //     $Inline = $this->inlineEmphasis($Excerpt);
-                    //     break;
-                    case "Code":
-                        $marker = $Excerpt['text'][0];
-                        if (preg_match('/^(['.$marker.']++)[ ]*+(.+?)[ ]*+(?<!['.$marker.'])\1(?!'.$marker.')/s', $Excerpt['text'], $matches))
-                        {
-                            $Inline = $this->inlineCode($matches);
-                        }
+                    case "Image":
+                        $Inline = $this->inlineImage($Excerpt);
                         break;
-                    // case "Strikethrough":
-                    //     $Inline = $this->inlineStrikethrough($Excerpt);
-                    //     break;
-                    // case "EscapeSequence":
-                    //     $Inline = $this->inlineEscapeSequence($Excerpt);
-                    //     break;
-                    default:
-                        continue;
+                    case "SpecialCharacter":
+                        $Inline = $this->inlineSpecialCharacter($Excerpt);
+                        break;
+                    case "Url":
+                        $Inline = $this->inlineUrl($Excerpt);
+                        break;
+                    case "UrlTag":
+                        $Inline = $this->inlineUrlTag($Excerpt);
+                        break;
+                    case "EmailTag":
+                        $Inline = $this->inlineEmailTag($Excerpt);
+                        break;
+                    case "Markup":
+                        $Inline = $this->inlineMarkup($Excerpt);
+                        break;
+                    case "Link":
+                        $Inline = $this->inlineLink($Excerpt);
+                        break;
+                    case "Emphasis":
+                        $Inline = $this->inlineEmphasis($Excerpt);
+                        break;
+                    case "Strikethrough":
+                        $Inline = $this->inlineStrikethrough($Excerpt);
+                        break;
+                    case "Code":
+                        $Inline = $this->inlineCode($Excerpt);
+                        break;
+                    case "EscapeSequence":
+                        $Inline = $this->inlineEscapeSequence($Excerpt);
+                        break;
+                }
+
+                if ( ! isset($Inline))
+                {
+                    continue;
                 }
 
                 # makes sure that the inline belongs to "our" marker
@@ -752,8 +771,7 @@ class Parsedown
         );
 
         $Inline['element']['elements'] = self::pregReplaceElements(
-        // $this->breaksEnabled ? '/[ ]*+\n/' : '/(?:[ ]*+\\\\|[ ]{2,}+)\n/',
-            '/[ ]*+\n/',
+         $this->breaksEnabled ? '/[ ]*+\n/' : '/(?:[ ]*+\\\\|[ ]{2,}+)\n/',
             array(
                 array('name' => 'br'),
                 array('text' => "\n"),
@@ -764,18 +782,332 @@ class Parsedown
         return $Inline;
     }
 
-    protected function inlineCode($matches)
+    protected function inlineCode($Excerpt) : ?array
     {
-        $text = $matches[2];
-        $text = preg_replace('/[ ]*+\n/', ' ', $text);
+        $marker = $Excerpt['text'][0];
+
+        if (preg_match('/^(['.$marker.']++)[ ]*+(.+?)[ ]*+(?<!['.$marker.'])\1(?!'.$marker.')/s', $Excerpt['text'], $matches))
+        {
+            $text = $matches[2];
+            $text = preg_replace('/[ ]*+\n/', ' ', $text);
+
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'code',
+                    'text' => $text,
+                ),
+            );
+        }
+        return null;
+    }
+
+    protected function inlineEmailTag($Excerpt) : ?array
+    {
+        $hostnameLabel = '[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?';
+
+        $commonMarkEmail = '[a-zA-Z0-9.!#$%&\'*+\/=?^_`{|}~-]++@'
+            . $hostnameLabel . '(?:\.' . $hostnameLabel . ')*';
+
+        if (strpos($Excerpt['text'], '>') !== false
+            and preg_match("/^<((mailto:)?$commonMarkEmail)>/i", $Excerpt['text'], $matches)
+        ){
+            $url = $matches[1];
+
+            if ( ! isset($matches[2]))
+            {
+                $url = "mailto:$url";
+            }
+
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'a',
+                    'text' => $matches[1],
+                    'attributes' => array(
+                        'href' => $url,
+                    ),
+                ),
+            );
+        }
+        return null;
+    }
+
+    protected function inlineEmphasis($Excerpt) : ?array
+    {
+        if ( ! isset($Excerpt['text'][1]))
+        {
+            return null;
+        }
+
+        $marker = $Excerpt['text'][0];
+
+        if ($Excerpt['text'][1] === $marker and preg_match($this->StrongRegex[$marker], $Excerpt['text'], $matches))
+        {
+            $emphasis = 'strong';
+        }
+        elseif (preg_match($this->EmRegex[$marker], $Excerpt['text'], $matches))
+        {
+            $emphasis = 'em';
+        }
+        else
+        {
+            return null;
+        }
 
         return array(
             'extent' => strlen($matches[0]),
             'element' => array(
-                'name' => 'code',
-                'text' => $text,
+                'name' => $emphasis,
+                'handler' => array(
+                    'function' => 'lineElements',
+                    'argument' => $matches[1],
+                    'destination' => 'elements',
+                )
             ),
         );
+    }
+
+    protected function inlineEscapeSequence($Excerpt) : ?array
+    {
+        if (isset($Excerpt['text'][1]) and in_array($Excerpt['text'][1], $this->specialCharacters))
+        {
+            return array(
+                'element' => array('rawHtml' => $Excerpt['text'][1]),
+                'extent' => 2,
+            );
+        }
+        return null;
+    }
+
+    protected function inlineImage($Excerpt) : ?array
+    {
+        if ( ! isset($Excerpt['text'][1]) or $Excerpt['text'][1] !== '[')
+        {
+            return null;
+        }
+
+        $Excerpt['text']= substr($Excerpt['text'], 1);
+
+        $Link = $this->inlineLink($Excerpt);
+
+        if ($Link === null)
+        {
+            return null;
+        }
+
+        $Inline = array(
+            'extent' => $Link['extent'] + 1,
+            'element' => array(
+                'name' => 'img',
+                'attributes' => array(
+                    'src' => $Link['element']['attributes']['href'],
+                    'alt' => $Link['element']['handler']['argument'],
+                ),
+                'autobreak' => true,
+            ),
+        );
+
+        $Inline['element']['attributes'] += $Link['element']['attributes'];
+
+        unset($Inline['element']['attributes']['href']);
+
+        return $Inline;
+    }
+
+    protected function inlineLink($Excerpt) : ?array
+    {
+        $Element = array(
+            'name' => 'a',
+            'handler' => array(
+                'function' => 'lineElements',
+                'argument' => null,
+                'destination' => 'elements',
+            ),
+            'nonNestables' => array('Url', 'Link'),
+            'attributes' => array(
+                'href' => null,
+                'title' => null,
+            ),
+        );
+
+        $extent = 0;
+
+        $remainder = $Excerpt['text'];
+
+        if (preg_match('/\[((?:[^][]++|(?R))*+)\]/', $remainder, $matches))
+        {
+            $Element['handler']['argument'] = $matches[1];
+
+            $extent += strlen($matches[0]);
+
+            $remainder = substr($remainder, $extent);
+        }
+        else
+        {
+            return null;
+        }
+
+        if (preg_match('/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/', $remainder, $matches))
+        {
+            $Element['attributes']['href'] = $matches[1];
+
+            if (isset($matches[2]))
+            {
+                $Element['attributes']['title'] = substr($matches[2], 1, - 1);
+            }
+
+            $extent += strlen($matches[0]);
+        }
+        else
+        {
+            if (preg_match('/^\s*\[(.*?)\]/', $remainder, $matches))
+            {
+                $definition = strlen($matches[1]) ? $matches[1] : $Element['handler']['argument'];
+                $definition = strtolower($definition);
+
+                $extent += strlen($matches[0]);
+            }
+            else
+            {
+                $definition = strtolower($Element['handler']['argument']);
+            }
+//            NEED TO FIX IT
+//            if (count($this->DefinitionData) == 0)
+//            {
+//                return null;
+//            }
+//
+//            $Definition = $this->DefinitionData['Reference'][$definition];
+//
+//            $Element['attributes']['href'] = $Definition['url'];
+//            $Element['attributes']['title'] = $Definition['title'];
+        }
+
+        return array(
+            'extent' => $extent,
+            'element' => $Element,
+        );
+    }
+
+    protected function inlineMarkup($Excerpt) : ?array
+    {
+        if ($this->markupEscaped or $this->safeMode or strpos($Excerpt['text'], '>') === false)
+        {
+            return null;
+        }
+
+        if ($Excerpt['text'][1] === '/' and preg_match('/^<\/\w[\w-]*+[ ]*+>/s', $Excerpt['text'], $matches))
+        {
+            return array(
+                'element' => array('rawHtml' => $matches[0]),
+                'extent' => strlen($matches[0]),
+            );
+        }
+
+        if ($Excerpt['text'][1] === '!' and preg_match('/^<!---?[^>-](?:-?+[^-])*-->/s', $Excerpt['text'], $matches))
+        {
+            return array(
+                'element' => array('rawHtml' => $matches[0]),
+                'extent' => strlen($matches[0]),
+            );
+        }
+
+        if ($Excerpt['text'][1] !== ' ' and preg_match('/^<\w[\w-]*+(?:[ ]*+'.$this->regexHtmlAttribute.')*+[ ]*+\/?>/s', $Excerpt['text'], $matches))
+        {
+            return array(
+                'element' => array('rawHtml' => $matches[0]),
+                'extent' => strlen($matches[0]),
+            );
+        }
+        return null;
+    }
+
+    protected function inlineSpecialCharacter($Excerpt) : ?array
+    {
+        if (substr($Excerpt['text'], 1, 1) !== ' ' and strpos($Excerpt['text'], ';') !== false
+            and preg_match('/^&(#?+[0-9a-zA-Z]++);/', $Excerpt['text'], $matches)
+        ) {
+            return array(
+                'element' => array('rawHtml' => '&' . $matches[1] . ';'),
+                'extent' => strlen($matches[0]),
+            );
+        }
+
+        return null;
+    }
+
+    protected function inlineStrikethrough($Excerpt) : ?array
+    {
+        if ( ! isset($Excerpt['text'][1]))
+        {
+            return null;
+        }
+
+        if ($Excerpt['text'][1] === '~' and preg_match('/^~~(?=\S)(.+?)(?<=\S)~~/', $Excerpt['text'], $matches))
+        {
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'del',
+                    'handler' => array(
+                        'function' => 'lineElements',
+                        'argument' => $matches[1],
+                        'destination' => 'elements',
+                    )
+                ),
+            );
+        }
+        return null;
+    }
+
+    protected function inlineUrl($Excerpt) : ?array
+    {
+        if ($this->urlsLinked !== true or ! isset($Excerpt['text'][2]) or $Excerpt['text'][2] !== '/')
+        {
+            return null;
+        }
+
+        if (strpos($Excerpt['context'], 'http') !== false
+            and preg_match('/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui', $Excerpt['context'], $matches, PREG_OFFSET_CAPTURE)
+        ) {
+            $url = $matches[0][0];
+
+            $Inline = array(
+                'extent' => strlen($matches[0][0]),
+                'position' => $matches[0][1],
+                'element' => array(
+                    'name' => 'a',
+                    'text' => $url,
+                    'attributes' => array(
+                        'href' => $url,
+                    ),
+                ),
+            );
+
+            return $Inline;
+        }
+        return null;
+    }
+
+    protected function inlineUrlTag($Excerpt) : ?array
+    {
+        if (strpos($Excerpt['text'], '>') !== false and preg_match('/^<(\w++:\/{2}[^ >]++)>/i', $Excerpt['text'], $matches))
+        {
+            $url = $matches[1];
+
+            return array(
+                'extent' => strlen($matches[0]),
+                'element' => array(
+                    'name' => 'a',
+                    'text' => $url,
+                    'attributes' => array(
+                        'href' => $url,
+                    ),
+                ),
+            );
+        }
+        return null;
     }
 
     #
@@ -939,6 +1271,7 @@ class Parsedown
         }
 
         $markup .= $autoBreak ? "\n" : '';
+
         return $markup;
     }
 
@@ -1064,10 +1397,29 @@ class Parsedown
     #
 
     protected $DefinitionData;
+
+    #
+    # Read-Only
+
+    protected $specialCharacters = array(
+        '\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '-', '.', '!', '|', '~'
+    );
+
+    protected $StrongRegex = array(
+        '*' => '/^[*]{2}((?:\\\\\*|[^*]|[*][^*]*+[*])+?)[*]{2}(?![*])/s',
+        '_' => '/^__((?:\\\\_|[^_]|_[^_]*+_)+?)__(?!_)/us',
+    );
+
+    protected $EmRegex = array(
+        '*' => '/^[*]((?:\\\\\*|[^*]|[*][*][^*]+?[*][*])+?)[*](?![*])/s',
+        '_' => '/^_((?:\\\\_|[^_]|__[^_]*__)+?)_(?!_)\b/us',
+    );
+
+    protected $regexHtmlAttribute = '[a-zA-Z_:][\w:.-]*+(?:\s*+=\s*+(?:[^"\'=<>`\s]+|"[^"]*+"|\'[^\']*+\'))?+';
 }
 
 $parsedown = new Parsedown();
 
-$text = file_get_contents('article.txt');
+$text = file_get_contents('parse-it.txt');
 
 var_dump($parsedown->text($text));
