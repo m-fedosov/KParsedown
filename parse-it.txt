@@ -1,5 +1,47 @@
-######## Level ?
-# Level 1
++ First item
++ Second item
++ Third item
++ Fourth item
+
+| Syntax      | Description | Test Text     |
+| :---        |    :----:   |          ---: |
+| Header      | Title       | Here's this   |
+| Paragraph   | Text        | And more      |
+
+1. First item
+2. Second item
+3. Third item
+    1. Indented item
+    2. Indented item
+4. Fourth item
+
+[comment]: <> (This is a comment, it will not be included)
+<!---
+your comment goes here
+and here
+-->
+
+[comment]: # (This actually is the most platform independent comment)
+
+In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole, filled with the ends
+of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to
+eat: it was a [hobbit-hole][1], and that means comfort.
+
+[1]: <https://en.wikipedia.org/wiki/Hobbit#Lifestyle> "Hobbit lifestyles"
+
+
+Some regular text here, and here's the code example:
+
+```python
+print("Hello, world!")
+for i in range(10):
+    print(i)
+```
+
+___
+Block Rule here
+___
+
 __Emphasis__
 just a text
 **bold text**
