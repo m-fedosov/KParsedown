@@ -1,23 +1,19 @@
-# Level 1
-## Level 2
-### Level 3
-#### Level 4
-##### Level 5
-###### Level 6
-####### Level ?
 ######## Level ?
-######### Level ?
-
-There u can  write, your __jokes__?
-
-* Point 1
-* Point 2
-* Point 3
-
-```
-<?php
-echo "Hello";
-?>
-```
-
-Here's some `'inline stupid code'`;
+# Level 1
+__Emphasis__
+just a text
+**bold text**
+~~strike through~~
+*italic*
+***Bold and italic***
+<fake@example.com>
+<https://www.markdownguide.org>
+This <em>word</em> is italic.
+https://duckduckgo.com
+``Use `code` in your Markdown file.``
+At the command prompt, type `nano`.
+\*Hello\*
+This is the *[Markdown Guide](https://www.markdownguide.org)*.
+This is the first line.
+And this is the second line.
+[![The San Juan Mountains are beautiful!](https://mdg.imgix.net/assets/images/san-juan-mountains.jpg?auto=format&fit=clip&q=40&w=1080 "San Juan Mountains")](https://www.markdownguide.org)
