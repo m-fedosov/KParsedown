@@ -727,7 +727,6 @@ class Parsedown
             );
             # NEED TO FIX - $Block['element']['elements'] []= & $Block['li'];
             $Block['element']['elements'] []= $Block['li'];
-
             return $Block;
         }
         return null;
@@ -776,7 +775,7 @@ class Parsedown
                     'destination' => 'elements'
                 )
             );
-//            NEED TO FIX
+//            KPHP doesn't support references
 //            $Block['element']['elements'] []= & $Block['li'];
             $Block['element']['elements'] []= $Block['li'];
 
@@ -796,7 +795,8 @@ class Parsedown
         {
             if (isset($Block['interrupted']))
             {
-                $Block['li']['handler']['argument'] []= '';
+                $indented_list_index = array_key_last($Block['element']['elements']);
+                $Block['element']['elements'][$indented_list_index]['handler']['argument'] []= '';
 
                 $Block['loose'] = true;
 
@@ -805,7 +805,9 @@ class Parsedown
 
             $text = substr($Line['body'], $requiredIndent);
 
-            $Block['li']['handler']['argument'] []= $text;
+            // KPHP doesn't support references
+            $indented_list_index = array_key_last($Block['element']['elements']);
+            $Block['element']['elements'][$indented_list_index]['handler']['argument'] []= $text;
 
             return $Block;
         }
@@ -814,7 +816,9 @@ class Parsedown
         {
             $text = preg_replace('/^[ ]{0,'.$requiredIndent.'}+/', '', $Line['body']);
 
-            $Block['li']['handler']['argument'] []= $text;
+            // KPHP doesn't support references
+            $indented_list_index = array_key_last($Block['element']['elements']);
+            $Block['element']['elements'][$indented_list_index]['handler']['argument'] []= $text;
 
             return $Block;
         }
@@ -827,7 +831,7 @@ class Parsedown
         {
             foreach ($Block['element']['elements'] as &$li)
             {
-                // NEED TO FIX - it's beeter to use:
+                // NEED TO FIX - it's beater to use:
                 // if (end($li['handler']['argument']) !== '')
                 if ($li['handler']['argument'][array_key_last($li['handler']['argument'])] !== '')
                 {
@@ -1998,7 +2002,7 @@ class Parsedown
     # Static Methods - сделал
     #
 
-    # I need to remove UTF-8
+    # NEED TO FIX, KPHP-htmlspecialchars doesn't work with UTF-8
     // return htmlspecialchars($text, $allowQuotes ? ENT_NOQUOTES : ENT_QUOTES, 'UTF-8');
     protected static function escape($text, $allowQuotes = false)
     {
