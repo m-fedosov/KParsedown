@@ -1,9 +1,11 @@
 <?php
 
-require_once 'php-parser/parsedown.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
-$parsedown = new Parsedown();
+use Markdown\kparser\parsedown;
 
-$text = file_get_contents('parse-it.txt');
+$parse = new parsedown();
 
-echo $parsedown->text($text);
+$text = '# Hello';
+
+echo $parse->text($text);
