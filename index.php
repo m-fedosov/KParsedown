@@ -6,6 +6,4 @@ use Markdown\kparser\parsedown;
 
 $parse = new parsedown();
 
-$text = '# Hello';
-
-echo $parse->text($text);
+var_dump($parse->text('# Hello'));

@@ -8,118 +8,66 @@ Markdown Parser in KPHP
 
 ### Features
 
-One File
-No Dependencies
-Cross-language support: works for both PHP and KPHP
+- One File
+- No Dependencies
+- Cross-language support: works for both PHP and KPHP
 
-
-Env file & markdown parser for KPHP.
-
-kParsedown provide two methods:
+KParsedown provide two methods:
 
 ```php
-parse_env_file(string $filename); # parse file
+# parse file
+$text = file_get_contents('README.md');
+var_dump($parse->text($text));
 
-parse_env_string(string $markdown_string); # parse string
+# parse string
+var_dump($parse->text('# Hello'));
 ```
 
-Both methods return HTML string(s). See example.
+Both methods return HTML string(s). See Quick Start.
 
 ## Quick Start
-Create **index.php** and write here:
+Create **vendor/autoload.php** with composer
+
+```bash
+composer dump-autoload
 ```
+
+Create **index.php** and write here:
+```php
 <?php
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use mifedosov\markdown\parser\Parsedown;
+use Markdown\kparser\parsedown;
 
-$Parsedown = new Parsedown();
+$parse = new parsedown();
 
-echo $Parsedown->text('Hello _Parsedown_!');
+var_dump($parse->text('Hello _Parsedown_!')); 
 ```
-
-## Example
-
-```php
-$Parsedown = new Parsedown();
-
-echo $Parsedown->text('Hello _Parsedown_!'); # prints: <p>Hello <em>Parsedown</em>!</p>
-```
-
-```php
-<?php
-
-    require_once 'vendor/autoload.php';
-
-    use pmswga\kenv\Env;
-
-    $env = Env::parse_env_file('.env');
-
-    print_r($env);
-```
-Run with PHP:
+Run  with **PHP**
 
 ```bash
-$ php -f index.php
-
-Array
-(
-    [APP_NAME] => Laravel
-    [APP_ENV] => local
-    [APP_KEY] => base64:mtlb8hldh5hZ0GlLzbhInsV531MSylspRI4JsmwVal8=
-    [APP_DEBUG] => true
-    [APP_URL] => http://localhost
-    [APP_12] => asfasf
-    [LOG_CHANNEL] => stack
-    [LOG_DEPRECATIONS_CHANNEL] => null
-    [LOG_LEVEL] => debug
-    [DB_CONNECTION] => mysql
-    [DB_HOST] => 127.0.0.1
-    [DB_PORT] => 3306
-    [DB_DATABASE] => laravel
-    [DB_USERNAME] => root
-    [DB_PASSWORD] =>
-    [BROADCAST_DRIVER] => log
-    [CACHE_DRIVER] => file
-    [FILESYSTEM_DISK] => local
-    [QUEUE_CONNECTION] => sync
-    [SESSION_DRIVER] => file
-    [SESSION_LIFETIME] => 120
-    [MEMCACHED_HOST] => 127.0.0.1
-    [REDIS_HOST] => 127.0.0.1
-    [REDIS_PASSWORD] => null
-    [REDIS_PORT] => 6379
-    [MAIL_MAILER] => smtp
-    [MAIL_HOST] => mailhog
-    [MAIL_PORT] => 1025
-    [MAIL_USERNAME] => null
-    [MAIL_PASSWORD] => null
-    [MAIL_ENCRYPTION] => null
-    [MAIL_FROM_ADDRESS] => null
-    [MAIL_FROM_NAME] => ${APP_NAME}
-    [AWS_ACCESS_KEY_ID] =>
-    [AWS_SECRET_ACCESS_KEY] =>
-    [AWS_DEFAULT_REGION] => us-east-1
-    [AWS_BUCKET] =>
-    [AWS_USE_PATH_STYLE_ENDPOINT] => false
-    [PUSHER_APP_ID] =>
-    [PUSHER_APP_KEY] =>
-    [PUSHER_APP_SECRET] =>
-    [PUSHER_APP_CLUSTER] => mt1
-    [MIX_PUSHER_APP_KEY] => ${PUSHER_APP_KEY}
-    [MIX_PUSHER_APP_CLUSTER] => ${PUSHER_APP_CLUSTER}
-)
+php -f index.php
+string(14) "<h1>Hello</h1>"
 ```
 
-Run with KPHP:
+Run with **KPHP**
 
 ```bash
-# 1. Compile
-$ kphp --composer-root $(pwd) --mode cli example.php
-# 2. Execute
-$ ./kphp_out/cli
+# Execute result in Terminal
+./kphp2cpp --composer-root $(pwd) --mode cli index.php
+./kphp_out/cli
+string(14) "<h1>Hello</h1>"
 ```
+
+or
+
+```bash
+# Execute result in localhost
+./kphp2cpp --composer-root $(pwd) index.php
+./kphp_out/server -H 8080 -f 1
+```
+http://localhost:8080/
 
 ## Advanced settings
 

@@ -1,0 +1,17 @@
+{
+  "name": "mike/markdown-parser",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "mifedosov1",
+      "email": "mifedosov@miem.hse.ru"
+    }
+  ],
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "Markdown\\": "src/"
+    }
+  }
+}
