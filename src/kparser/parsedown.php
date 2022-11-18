@@ -8,9 +8,58 @@ class parsedown
 
     const version = '1.8.0-beta-7';
 
+    #
+    # Setters
+    #
+
+    public function setBreaksEnabled($breaksEnabled)
+    {
+        $this->breaksEnabled = $breaksEnabled;
+
+        return $this;
+    }
+
+    private $breaksEnabled = null; # set a line break
+
+    public function setMarkupEscaped($markupEscaped)
+    {
+        $this->markupEscaped = $markupEscaped;
+
+        return $this;
+    }
+
+    private $markupEscaped = null;
+
+    function setUrlsLinked($urlsLinked)
+    {
+        $this->urlsLinked = $urlsLinked;
+
+        return $this;
+    }
+
+    private $urlsLinked = true;
+
+    public function setSafeMode($safeMode)
+    {
+        $this->safeMode = (bool) $safeMode;
+
+        return $this;
+    }
+
+    private $safeMode = false;
+
+    public function setStrictMode($strictMode)
+    {
+        $this->strictMode = (bool) $strictMode;
+
+        return $this;
+    }
+
+    private $strictMode = true; // #Level 1 = <p>#Level 1</p>
+
     # ~
 
-    function text($text)
+    public function text($text)
     {
         $Elements = $this->textElements($text);
 
@@ -23,7 +72,7 @@ class parsedown
         return $markup;
     }
 
-    protected function textElements($text)
+    private function textElements($text)
     {
         # make sure no definitions are set
         $this->DefinitionData = array();
@@ -41,56 +90,7 @@ class parsedown
         return $this->linesElements($lines);
     }
 
-    #
-    # Setters
-    #
-
-    function setBreaksEnabled($breaksEnabled)
-    {
-        $this->breaksEnabled = $breaksEnabled;
-
-        return $this;
-    }
-
-    protected $breaksEnabled = true; # set a line break
-
-    function setMarkupEscaped($markupEscaped)
-    {
-        $this->markupEscaped = $markupEscaped;
-
-        return $this;
-    }
-
-    protected $markupEscaped = null;
-
-    function setUrlsLinked($urlsLinked)
-    {
-        $this->urlsLinked = $urlsLinked;
-
-        return $this;
-    }
-
-    protected $urlsLinked = true;
-
-    function setSafeMode($safeMode)
-    {
-        $this->safeMode = (bool) $safeMode;
-
-        return $this;
-    }
-
-    protected $safeMode = null;
-
-    function setStrictMode($strictMode)
-    {
-        $this->strictMode = (bool) $strictMode;
-
-        return $this;
-    }
-
-    protected $strictMode = null; // #Level 1 = <p>#Level 1</p>
-
-    protected $safeLinksWhitelist = array(
+    private $safeLinksWhitelist = array(
         'http://',
         'https://',
         'ftp://',
@@ -627,7 +627,7 @@ class parsedown
 
         $text = trim($Line['text'], '#');
 
-        if ($this->strictMode and substr($text, 0, 1) !== ' ')
+        if ($this->strictMode and $text !== '' and substr($text, 0, 1) !== ' ')
         {
             return null;
         }
@@ -2049,3 +2049,9 @@ class parsedown
         'wbr', 'time',
     );
 }
+
+$parse = new parsedown();
+
+$text = file_get_contents('../../strict_atx_heading.md');
+
+var_dump($parse->text($text));
