@@ -1,8 +1,6 @@
 <?php
 
-namespace Markdown\kparser;
-
-class parsedown
+class Parsedown
 {
     # ~
 
@@ -114,7 +112,7 @@ class parsedown
 
     protected $BlockTypes = array(
         '#' => array('Header'),
-        '*' => array('Rule'),
+        '*' => array('Rule', 'List'),
         '+' => array('List'),
         '-' => array('SetextHeader', 'Table', 'Rule', 'List'),
         '0' => array('List'),
@@ -285,7 +283,7 @@ class parsedown
                         $Block = $this->blockRule($Line);
                         break;
                     case "List":
-                        $Block = $this->blockList($Line);
+                        $Block = $this->blockList($Line, $CurrentBlock);
                         break;
                     case "Comment":
                         $Block = $this->blockComment($Line);
@@ -693,14 +691,13 @@ class parsedown
 
                 if ($listStart !== '1')
                 {
-//                    MAYBE NEED TO FIX
-//                    if (
-//                        isset($CurrentBlock)
-//                        and $CurrentBlock['type'] === 'Paragraph'
-//                        and ! isset($CurrentBlock['interrupted'])
-//                    ) {
-//                        return null;
-//                    }
+                    if (
+                        isset($CurrentBlock)
+                        and $CurrentBlock['type'] === 'Paragraph'
+                        and ! isset($CurrentBlock['interrupted'])
+                    ) {
+                        return null;
+                    }
 
                     $Block['element']['attributes'] = array('start' => $listStart);
                 }
@@ -1375,7 +1372,7 @@ class parsedown
         );
 
         $Inline['element']['elements'] = self::pregReplaceElements(
-         $this->breaksEnabled ? '/[ ]*+\n/' : '/(?:[ ]*+\\\\|[ ]{2,}+)\n/',
+            $this->breaksEnabled ? '/[ ]*+\n/' : '/(?:[ ]*+\\\\|[ ]{2,}+)\n/',
             array(
                 array('name' => 'br'),
                 array('text' => "\n"),
@@ -2012,6 +2009,22 @@ class parsedown
         }
     }
 
+    static function instance($name = 'default')
+    {
+        if (isset(self::$instances[$name]))
+        {
+            return self::$instances[$name];
+        }
+
+        $instance = new static();
+
+        self::$instances[$name] = $instance;
+
+        return $instance;
+    }
+
+    private static $instances = array();
+
     #
     # Fields
     #
@@ -2049,9 +2062,3 @@ class parsedown
         'wbr', 'time',
     );
 }
-
-$parse = new parsedown();
-
-$text = file_get_contents('../../strict_atx_heading.md');
-
-var_dump($parse->text($text));

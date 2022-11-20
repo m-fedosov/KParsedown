@@ -2,8 +2,6 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use Markdown\kparser\parsedown;
+$parse = new Parsedown();
 
-$parse = new parsedown();
-
-var_dump($parse->text('# Hello'));
+var_dump($parse->text('# Hello from KParsedown!!!'));
