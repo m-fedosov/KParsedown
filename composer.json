@@ -1,5 +1,7 @@
 {
-    "name": "mike/markdown-parser",
+    "name": "m-fedosov/markdown-parser",
+    "description": "Parser for Markdown. Working on KPHP",
+    "keywords": ["markdown", "parser", "kphp"],
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -13,7 +15,7 @@
         "ext-mbstring": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^4.8.35"
+        "phpunit/phpunit": "9.5.26"
     },
     "autoload": {
         "psr-0": {"Parsedown": ""}
