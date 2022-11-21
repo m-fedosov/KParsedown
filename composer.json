@@ -1,5 +1,5 @@
 {
-    "name": "m-fedosov/markdown-parser",
+    "name": "m-fedosov/kphp-markdown-parser",
     "description": "Parser for Markdown. Working on KPHP",
     "keywords": ["markdown", "parser", "kphp"],
     "type": "library",
