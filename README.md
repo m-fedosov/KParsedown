@@ -69,6 +69,31 @@ or
 ```
 http://localhost:8080/
 
+## KParsedown works with KTemplate
+
+To begin with, require KTemplate
+
+```bash
+composer require quasilyte/ktemplate
+```
+
+Next, you can find examples of usage in the directory 'ktemplate_usage'
+
+Run with PHP:
+```bash
+php -f ktemplate_usage/example.php
+```
+
+or
+
+Run with KPHP:
+```bash
+kphp --composer-root $(pwd) --mode cli ktemplate_usage/example.php
+./kphp_out/cli
+```
+
+And open ktemplate_usage/example.html in your browser ))
+
 ## Advanced settings
 
 Parsedown features were implemented in KParsedown =^_^=

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>markdown_to_html</title>
+ </head>
+ <body>
+  {% let $my_markdown %}
+  # Вот это ништяк
+  ![ты красавчик](https://bigpicture.ru/wp-content/uploads/2018/11/bob1-800x420.jpg)
+
+  Ты реально крут, раз используешь markdown_to_html фильтр
+  {% end %}
+  {{ $my_markdown|markdown_to_html|raw }}
+ </body>
+</html>
